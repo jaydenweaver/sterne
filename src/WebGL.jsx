@@ -6,7 +6,12 @@ export default function WebGLCanvas() {
   const canvasRef = useRef(null);
 
   useEffect(() => {
-    const gl = canvasRef.current.getContext('webgl');
+    const canvas = canvasRef.current;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    
+    const gl = canvas.getContext('webgl');
+    gl.viewport(0, 0, canvas.width, canvas.height);
     if (!gl) {
       console.error("webgl not supported!");
       return;
@@ -67,5 +72,13 @@ export default function WebGLCanvas() {
 
   }, []);
 
-  return <canvas ref={canvasRef} width={800} height={600}/>;
+  return <canvas ref={canvasRef} style={{
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100vw',
+    height: '100vh',
+    display: 'block',
+    zIndex: -1,
+  }} />;
 }
