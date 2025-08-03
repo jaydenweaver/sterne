@@ -35,6 +35,20 @@ function createProgram(gl, vertSource, fragSource) {
   return program;
 }
 
+function generateParticleUV(textureWidth, textureHeight) {
+  const particleCount = textureWidth * textureHeight;
+  const uv = new Float32Array(particleCount * 2);
+
+  for (let y = 0; y < textureHeight; y++) {
+    for (let x = 0; x < textureWidth; x++) {
+      const i = y * textureWidth + x;
+      uv[i * 2] = x / textureWidth;
+      uv[i * 2 + 1] = y / textureHeight;
+    }
+  }
+  return uv;
+}
+
 export default function WebGLCanvas() {
   const canvasRef = useRef(null);
   const [mouse, setMouse] = useState({x: 0.5, y:0.5});
@@ -59,20 +73,56 @@ export default function WebGLCanvas() {
     const program = createProgram(gl, vertexShaderSource, fragmentShaderSource);
     gl.useProgram(program);
 
-    const positions = new Float32Array([0.5, 0, 0, 0, -0.5, 0]);
+    const textureWidth = 64;
+    const textureHeight = 64;
+    const particleCount = textureWidth * textureHeight;
+    const uvData = generateParticleUV(textureWidth, textureHeight);
+    
+    const uvBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, uvData, gl.STATIC_DRAW);
+    
+    const uvAttribLocation = gl.getAttribLocation(program, 'a_particleUV');
+    gl.enableVertexAttribArray(uvAttribLocation);
+    gl.vertexAttribPointer(uvAttribLocation, 2, gl.FLOAT, false, 0, 0);
 
-    const positionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+    const initialPositions = new Float32Array(particleCount * 4);
+    for(let i = 0; i < particleCount; i++) {
+      initialPositions[i * 4] = Math.random() * canvas.width;
+      initialPositions[i * 4 + 1] = Math.random() * canvas.height;
+      initialPositions[i * 4 + 2] = 0;
+      initialPositions[i * 4 + 3] = 0;
+    }
 
-    const positionLocation = gl.getAttribLocation(program, "position");
-    gl.enableVertexAttribArray(positionLocation);
-    gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+    const positionTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, positionTexture);
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGBA32F,
+      textureWidth,
+      textureHeight,
+      0,
+      gl.RGBA,
+      gl.FLOAT,
+      initialPositions  
+    );
 
-    gl.clearColor(0,0,0,1);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    
+    const posTexLoc = gl.getUniformLocation(program, 'u_positions');
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, positionTexture);
+    gl.uniform1i(posTexLoc, 0); // texture unit 0
+
+    const canvasSizeLoc = gl.getUniformLocation(program, 'u_canvasSize');
+    gl.uniform2f(canvasSizeLoc, canvas.width, canvas.height);
+    
+    gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
-    gl.drawArrays(gl.POINTS, 0, 3);
+    gl.drawArrays(gl.POINTS, 0, particleCount);
 
   }, []);
 
