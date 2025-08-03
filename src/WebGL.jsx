@@ -55,7 +55,7 @@ export default function WebGLCanvas() {
     const program = createProgram(vertexShaderSource, fragmentShaderSource);
     gl.useProgram(program);
 
-    const positions = new Float32Array([0, 0]);
+    const positions = new Float32Array([0.5, 0, 0, 0, -0.5, 0]);
 
     const positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
@@ -68,7 +68,7 @@ export default function WebGLCanvas() {
     gl.clearColor(0,0,0,1);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
-    gl.drawArrays(gl.POINTS, 0, 1);
+    gl.drawArrays(gl.POINTS, 0, 3);
 
   }, []);
 
