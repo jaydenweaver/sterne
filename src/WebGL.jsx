@@ -35,6 +35,22 @@ function createProgram(gl, vertSource, fragSource) {
   return program;
 }
 
+function initParticles(particleCount, canvas) {
+  const initialPositions = new Float32Array(particleCount * 4);
+    for(let i = 0; i < particleCount; i++) {
+      initialPositions[i * 4] = Math.random() * canvas.width;
+      initialPositions[i * 4 + 1] = Math.random() * canvas.height;
+      initialPositions[i * 4 + 2] = 0;
+      initialPositions[i * 4 + 3] = 0;
+    }
+  return initialPositions;
+}
+
+function renderParticles(gl, particleCount) {
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.drawArrays(gl.POINTS, 0, particleCount);
+}
+
 function generateParticleUV(textureWidth, textureHeight) {
   const particleCount = textureWidth * textureHeight;
   const uv = new Float32Array(particleCount * 2);
@@ -51,7 +67,7 @@ function generateParticleUV(textureWidth, textureHeight) {
 
 export default function WebGLCanvas() {
   const canvasRef = useRef(null);
-  const [mouse, setMouse] = useState({x: 0.5, y:0.5});
+  const mouseRef = useRef({ x: 0.5, y:0.5 });
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -73,8 +89,8 @@ export default function WebGLCanvas() {
     const program = createProgram(gl, vertexShaderSource, fragmentShaderSource);
     gl.useProgram(program);
 
-    const textureWidth = 64;
-    const textureHeight = 64;
+    const textureWidth = 256;
+    const textureHeight = 256;
     const particleCount = textureWidth * textureHeight;
     const uvData = generateParticleUV(textureWidth, textureHeight);
     
@@ -86,13 +102,7 @@ export default function WebGLCanvas() {
     gl.enableVertexAttribArray(uvAttribLocation);
     gl.vertexAttribPointer(uvAttribLocation, 2, gl.FLOAT, false, 0, 0);
 
-    const initialPositions = new Float32Array(particleCount * 4);
-    for(let i = 0; i < particleCount; i++) {
-      initialPositions[i * 4] = Math.random() * canvas.width;
-      initialPositions[i * 4 + 1] = Math.random() * canvas.height;
-      initialPositions[i * 4 + 2] = 0;
-      initialPositions[i * 4 + 3] = 0;
-    }
+    let initialPositions = initParticles(particleCount, canvas);
 
     const positionTexture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, positionTexture);
@@ -120,19 +130,36 @@ export default function WebGLCanvas() {
     gl.uniform2f(canvasSizeLoc, canvas.width, canvas.height);
     
     gl.clearColor(0, 0, 0, 1);
-    gl.clear(gl.COLOR_BUFFER_BIT);
+  
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);   
+    const startTime = Date.now();
+    let frameId;
+    function renderFrame() {
+      const time = Date.now() - startTime;
+      const timeLoc = gl.getUniformLocation(program, 'u_time');
+      gl.uniform1f(timeLoc, time);
 
-    gl.drawArrays(gl.POINTS, 0, particleCount);
-
+      const mousePosLoc = gl.getUniformLocation(program, 'u_mousePos');
+      const mouse = mouseRef.current;
+      gl.uniform2f(mousePosLoc, mouse.x * canvas.width, mouse.y * canvas.height);
+     
+      renderParticles(gl, particleCount);
+      frameId = requestAnimationFrame(renderFrame);
+    }
+    renderFrame();
+    
+    return () => {
+      cancelAnimationFrame(frameId);
+    };
   }, []);
 
   const handleMouseMove = (e) => {
     const rect = canvasRef.current.getBoundingClientRect();
-    setMouse({
+    mouseRef.current = {
       x: (e.clientX - rect.left) / rect.width,
       y: 1 - (e.clientY - rect.top) / rect.height,
-    });
-    console.log(mouse);
+    };
   };
 
   return <canvas ref={canvasRef} style={{
@@ -142,6 +169,6 @@ export default function WebGLCanvas() {
     width: '100vw',
     height: '100vh',
     display: 'block',
-    zIndex: -1,
+    zIndex: 0,
   }} onMouseMove={handleMouseMove} />;
 }
