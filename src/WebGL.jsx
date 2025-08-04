@@ -70,13 +70,12 @@ function getTextPixelPositions(text, width, height) {
   stage.width = width;
   stage.height = height;
 
-  const contex = stage.getContext("2d");
-  context.fillStyle = "black";
-  context.fillRect(0, 0, width, height);
+  const context = stage.getContext("2d");
+  context.clearRect(0, 0, width, height); 
   context.font = "bold 100px sans-serif";
   context.fillStyle = "white";
   context.textAlign = "center";
-  context.textBaseLine = "middle";
+  context.textBaseline = "middle";
   context.fillText(text, width / 2, height / 2);
 
   const imageData = context.getImageData(0, 0, width, height).data;
@@ -87,11 +86,31 @@ function getTextPixelPositions(text, width, height) {
       const index = (y * width + x) * 4;
       const alpha = imageData[index + 3];
       if (alpha > 128)
-        positions.push(x, y, Math.random(), 0);
+        positions.push(x, y, 1.0, 0);
     }
   }
 
   return new Float32Array(positions);
+}
+
+function getTextTargetTextureData(text, canvasWidth, canvasHeight, particleCount, initialPositions) {
+  const rawTextPositions = getTextPixelPositions(text, canvasWidth, canvasHeight); 
+  const result = new Float32Array(particleCount * 4);
+
+  const numTextParticles = rawTextPositions.length / 4;
+
+  const indices = Array.from({ length: particleCount }, (_, i) => i);
+  indices.sort(() => 0.5 - Math.random());
+
+  for (let i = 0; i < particleCount; i++) {
+    const index = indices[i];
+    if (i < numTextParticles) {
+      result.set(rawTextPositions.subarray(i * 4, i * 4 + 4), index * 4);
+    } else {
+      result.set(initialPositions.subarray(index * 4, index * 4 + 4), index * 4);
+    }
+  }
+  return result;
 }
 
 export default function WebGLCanvas() {
@@ -118,8 +137,8 @@ export default function WebGLCanvas() {
     const program = createProgram(gl, vertexShaderSource, fragmentShaderSource);
     gl.useProgram(program);
 
-    const textureWidth = 64;
-    const textureHeight = 64;
+    const textureWidth = 128;
+    const textureHeight = 128;
     const particleCount = textureWidth * textureHeight;
     const uvData = generateParticleUV(textureWidth, textureHeight);
     
@@ -132,6 +151,7 @@ export default function WebGLCanvas() {
     gl.vertexAttribPointer(uvAttribLocation, 2, gl.FLOAT, false, 0, 0);
 
     let initialPositions = initParticles(particleCount, canvas);
+    let targetPositions = getTextTargetTextureData("Hello", canvas.width, canvas.height, particleCount, initialPositions);
 
     const positionTexture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, positionTexture);
@@ -146,14 +166,36 @@ export default function WebGLCanvas() {
       gl.FLOAT,
       initialPositions  
     );
-
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    
+    const targetTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, targetTexture);
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGBA32F,
+      textureWidth,
+      textureHeight,
+      0,
+      gl.RGBA,
+      gl.FLOAT,
+      targetPositions
+    );
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+
+    console.log("target position", targetPositions.slice(0, 20));
     
     const posTexLoc = gl.getUniformLocation(program, 'u_positions');
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, positionTexture);
     gl.uniform1i(posTexLoc, 0); // texture unit 0
+
+    const targetTexLoc = gl.getUniformLocation(program, 'u_targets');
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, targetTexture);
+    gl.uniform1i(targetTexLoc, 1); // texture unit 1
 
     const canvasSizeLoc = gl.getUniformLocation(program, 'u_canvasSize');
     gl.uniform2f(canvasSizeLoc, canvas.width, canvas.height);
@@ -198,6 +240,6 @@ export default function WebGLCanvas() {
     width: '100vw',
     height: '100vh',
     display: 'block',
-    zIndex: 0,
+    zIndex: -1,
   }} onMouseMove={handleMouseMove} />;
 }
