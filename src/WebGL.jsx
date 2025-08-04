@@ -35,12 +35,12 @@ function createProgram(gl, vertSource, fragSource) {
   return program;
 }
 
-function initParticles(particleCount, canvas) {
+function initParticles(particleCount, canvas, maxDepth) {
   const initialPositions = new Float32Array(particleCount * 4);
     for(let i = 0; i < particleCount; i++) {
       initialPositions[i * 4] = Math.random() * canvas.width;
       initialPositions[i * 4 + 1] = Math.random() * canvas.height;
-      initialPositions[i * 4 + 2] = 0;
+      initialPositions[i * 4 + 2] = Math.random() ** 4;
       initialPositions[i * 4 + 3] = 0;
     }
   return initialPositions;
@@ -65,9 +65,38 @@ function generateParticleUV(textureWidth, textureHeight) {
   return uv;
 }
 
+function getTextPixelPositions(text, width, height) {
+  const stage = document.createElement("canvas");
+  stage.width = width;
+  stage.height = height;
+
+  const contex = stage.getContext("2d");
+  context.fillStyle = "black";
+  context.fillRect(0, 0, width, height);
+  context.font = "bold 100px sans-serif";
+  context.fillStyle = "white";
+  context.textAlign = "center";
+  context.textBaseLine = "middle";
+  context.fillText(text, width / 2, height / 2);
+
+  const imageData = context.getImageData(0, 0, width, height).data;
+
+  const positions = [];
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const index = (y * width + x) * 4;
+      const alpha = imageData[index + 3];
+      if (alpha > 128)
+        positions.push(x, y, Math.random(), 0);
+    }
+  }
+
+  return new Float32Array(positions);
+}
+
 export default function WebGLCanvas() {
   const canvasRef = useRef(null);
-  const mouseRef = useRef({ x: 0.5, y:0.5 });
+  const mouseRef = useRef({ x: 0.0, y: 0.0 });
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -76,12 +105,12 @@ export default function WebGLCanvas() {
     canvas.height = window.innerHeight;
     
     const gl = canvas.getContext('webgl2');
-    gl.viewport(0, 0, canvas.width, canvas.height);
-    
     if (!gl) {
       console.error("webgl2 not supported!");
       return;
     }
+    
+    gl.viewport(0, 0, canvas.width, canvas.height);
     
     const vertexShaderSource = vertexShader;
     const fragmentShaderSource = fragmentShader;
@@ -89,8 +118,8 @@ export default function WebGLCanvas() {
     const program = createProgram(gl, vertexShaderSource, fragmentShaderSource);
     gl.useProgram(program);
 
-    const textureWidth = 256;
-    const textureHeight = 256;
+    const textureWidth = 64;
+    const textureHeight = 64;
     const particleCount = textureWidth * textureHeight;
     const uvData = generateParticleUV(textureWidth, textureHeight);
     
