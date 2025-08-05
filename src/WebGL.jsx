@@ -35,11 +35,11 @@ function createProgram(gl, vertSource, fragSource) {
   return program;
 }
 
-function initParticles(particleCount, canvas, maxDepth) {
+function initParticles(particleCount) {
   const initialPositions = new Float32Array(particleCount * 4);
     for(let i = 0; i < particleCount; i++) {
-      initialPositions[i * 4] = Math.random() * canvas.width;
-      initialPositions[i * 4 + 1] = Math.random() * canvas.height;
+      initialPositions[i * 4] = Math.random();
+      initialPositions[i * 4 + 1] = Math.random();
       initialPositions[i * 4 + 2] = Math.random() ** 4;
       initialPositions[i * 4 + 3] = 0;
     }
@@ -86,7 +86,7 @@ function getTextPixelPositions(text, width, height) {
       const index = (y * width + x) * 4;
       const alpha = imageData[index + 3];
       if (alpha > 128)
-        positions.push(x, y, 1.0, 0);
+        positions.push(x / width, y / height, 1.0, 0);
     }
   }
 
@@ -95,7 +95,7 @@ function getTextPixelPositions(text, width, height) {
 
 function getTextTargetTextureData(text, canvasWidth, canvasHeight, particleCount, initialPositions) {
   const rawTextPositions = getTextPixelPositions(text, canvasWidth, canvasHeight); 
-  const result = new Float32Array(particleCount * 4);
+  const result = new Float32Array(particleCount * 4 + 1); // lets store number of 'active' particles at the end
 
   const numTextParticles = rawTextPositions.length / 4;
 
@@ -103,22 +103,38 @@ function getTextTargetTextureData(text, canvasWidth, canvasHeight, particleCount
   indices.sort(() => 0.5 - Math.random());
 
   for (let i = 0; i < particleCount; i++) {
-    const index = indices[i];
+    const index = indices[i] * 4;
     if (i < numTextParticles) {
-      result.set(rawTextPositions.subarray(i * 4, i * 4 + 4), index * 4);
+      const subIndex = i * 4;
+      result.set(rawTextPositions.subarray(subIndex, subIndex + 4), index);
     } else {
-      result.set(initialPositions.subarray(index * 4, index * 4 + 4), index * 4);
+      result.set(initialPositions.subarray(index, index + 4), index);
     }
   }
+
+  result[result.length - 1] = numTextParticles; // set last element to 'active' particle count
+  console.log(result[result.length-1]);
   return result;
 }
 
 export default function WebGLCanvas() {
   const canvasRef = useRef(null);
   const mouseRef = useRef({ x: 0.0, y: 0.0 });
+  const initialPositionsRef = useRef(null);
+  
+  
 
   useEffect(() => {
+    const particlesPerPixel = 0.01; // 1 particel per 100 pixels^2
+    const textureWidth = 200;
+    const textureHeight = 200;
+    const particleCount = textureWidth * textureHeight;
+    
     if (!canvasRef.current) return;
+    
+    if (!initialPositionsRef.current)
+      initialPositionsRef.current = initParticles(particleCount);
+
     const canvas = canvasRef.current;
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -137,9 +153,6 @@ export default function WebGLCanvas() {
     const program = createProgram(gl, vertexShaderSource, fragmentShaderSource);
     gl.useProgram(program);
 
-    const textureWidth = 128;
-    const textureHeight = 128;
-    const particleCount = textureWidth * textureHeight;
     const uvData = generateParticleUV(textureWidth, textureHeight);
     
     const uvBuffer = gl.createBuffer();
@@ -149,53 +162,63 @@ export default function WebGLCanvas() {
     const uvAttribLocation = gl.getAttribLocation(program, 'a_particleUV');
     gl.enableVertexAttribArray(uvAttribLocation);
     gl.vertexAttribPointer(uvAttribLocation, 2, gl.FLOAT, false, 0, 0);
-
-    let initialPositions = initParticles(particleCount, canvas);
-    let targetPositions = getTextTargetTextureData("Hello", canvas.width, canvas.height, particleCount, initialPositions);
-
+    
     const positionTexture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, positionTexture);
-    gl.texImage2D(
-      gl.TEXTURE_2D,
-      0,
-      gl.RGBA32F,
-      textureWidth,
-      textureHeight,
-      0,
-      gl.RGBA,
-      gl.FLOAT,
-      initialPositions  
-    );
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    
-    const targetTexture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, targetTexture);
-    gl.texImage2D(
-      gl.TEXTURE_2D,
-      0,
-      gl.RGBA32F,
-      textureWidth,
-      textureHeight,
-      0,
-      gl.RGBA,
-      gl.FLOAT,
-      targetPositions
-    );
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 
-    console.log("target position", targetPositions.slice(0, 20));
-    
+    const targetTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, targetTexture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);  
+ 
     const posTexLoc = gl.getUniformLocation(program, 'u_positions');
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, positionTexture);
     gl.uniform1i(posTexLoc, 0); // texture unit 0
 
     const targetTexLoc = gl.getUniformLocation(program, 'u_targets');
-    gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, targetTexture);
     gl.uniform1i(targetTexLoc, 1); // texture unit 1
+    
+    function updateTextures() {
+      const initialPositions = initialPositionsRef.current;
+      const targetPositions = getTextTargetTextureData(
+        "helloooooooooooooooo",
+        canvas.width,
+        canvas.height,
+        particleCount,
+        initialPositions
+      );
+
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, positionTexture);
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA32F,
+        textureWidth,
+        textureHeight,
+        0,
+        gl.RGBA,
+        gl.FLOAT,
+        initialPositions
+      );
+
+      gl.activeTexture(gl.TEXTURE1);
+      gl.bindTexture(gl.TEXTURE_2D, targetTexture);
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA32F,
+        textureWidth,
+        textureHeight,
+        0,
+        gl.RGBA,
+        gl.FLOAT,
+        targetPositions
+      );
+    }
+  
+    updateTextures();
 
     const canvasSizeLoc = gl.getUniformLocation(program, 'u_canvasSize');
     gl.uniform2f(canvasSizeLoc, canvas.width, canvas.height);
@@ -220,8 +243,22 @@ export default function WebGLCanvas() {
     }
     renderFrame();
     
+    function handleResize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      gl.viewport(0, 0, canvas.width, canvas.height);
+
+      const canvasSizeLoc = gl.getUniformLocation(program, 'u_canvasSize');
+      gl.uniform2f(canvasSizeLoc, canvas.width, canvas.height);
+
+      updateTextures();
+    }
+
+    window.addEventListener("resize", handleResize);
+
     return () => {
       cancelAnimationFrame(frameId);
+      window.removeEventListener("resize", handleResize);
     };
   }, []);
 

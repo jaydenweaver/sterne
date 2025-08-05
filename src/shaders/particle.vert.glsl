@@ -25,7 +25,7 @@ void main() {
   float smoothedT = customEase(t);
   vec3 interpolated = mix(currentPos.xyz, targetPos.xyz, smoothedT);
 
-  vec2 position = interpolated.xy / u_canvasSize * 2.0 - 1.0;
+  vec2 position = interpolated.xy * 2.0 - 1.0;
   position.y *= -1.0;
 
   gl_Position = vec4(position, interpolated.z, 1.0);
