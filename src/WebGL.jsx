@@ -167,7 +167,7 @@ export default function WebGLCanvas() {
       const timeLoc = gl.getUniformLocation(program, 'u_time');
       gl.uniform1f(timeLoc, time);
       
-      const lerpStrength = 0.02;
+      const lerpStrength = 0.015;
       smoothMouseRef.current.x = lerp(smoothMouseRef.current.x, targetMouseRef.current.x, lerpStrength);
       smoothMouseRef.current.y = lerp(smoothMouseRef.current.y, targetMouseRef.current.y, lerpStrength);
 
