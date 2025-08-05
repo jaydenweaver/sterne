@@ -85,7 +85,7 @@ export default function WebGLCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     
-    const particleDensity = 0.5 / 100; // 2 particles per 100 pixels^2
+    const particleDensity = 1.5 / 100; // 2 particles per 100 pixels^2
     particleCountRef.current = calculateParticleCount(particleDensity, canvas.width, canvas.height);
 
     const textureSize = Math.sqrt(particleCountRef.current);

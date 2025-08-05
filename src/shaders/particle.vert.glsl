@@ -15,7 +15,7 @@ void main() {
   vec2 particlePos = posData.xy;
   float z = posData.z;
 
-  float parallaxStrength = 0.05;
+  float parallaxStrength = 0.06;
 
   vec2 mouseNorm = u_mousePos / u_canvasSize;
   vec2 mouseOffset = (0.5 - mouseNorm) * parallaxStrength * z;
@@ -26,9 +26,8 @@ void main() {
   float waveY = sin(time * 1.7 + particlePos.y * 15.0 + 1.0) * 0.005;
 
   vec2 timeOffset = vec2(waveX, waveY) * z;
-
   vec2 pos = (particlePos + mouseOffset + timeOffset) * 2.0 - 1.0;
 
   gl_Position = vec4(pos, 0.0, 1.0);
-  gl_PointSize = mix(1.0, 3.0, z);
+  gl_PointSize = mix(0.5, 1.5, z);
 }

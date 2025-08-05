@@ -5,7 +5,7 @@ import WebGLCanvas from './WebGL.jsx';
 function App() {
   return (
     <div>
-      <h1 style={{zIndex: 1, position: 'relative',}}>Jayden Weaver</h1>
+      <h1 style={{zIndex: 1, position: 'relative',}}>sterne</h1>
       <WebGLCanvas/>
     </div>
   )
