@@ -111,16 +111,21 @@ function getTextTargetTextureData(text, canvasWidth, canvasHeight, particleCount
       result.set(initialPositions.subarray(index, index + 4), index);
     }
   }
-
   result[result.length - 1] = numTextParticles; // set last element to 'active' particle count
-  console.log(result[result.length-1]);
   return result;
+}
+
+function calculateParticleCount(density, width, height){
+    return Math.ceil(Math.sqrt(density * width * height)) ** 2;
 }
 
 export default function WebGLCanvas() {
   const canvasRef = useRef(null);
   const mouseRef = useRef({ x: 0.0, y: 0.0 });
   const initialPositionsRef = useRef(null); 
+  const particleCountRef = useRef(0);
+  const textureSizeRef = useRef({ width: 0, height: 0 });
+  const uvBufferRef = useRef(null);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -129,15 +134,16 @@ export default function WebGLCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     
-    const particlesPerPixel = 2 / 100; // 5 particles per 100 pixels^2
-    const textureWidth = Math.ceil(Math.sqrt(canvas.width * canvas.height * particlesPerPixel));
-    const textureHeight = textureWidth;
-    const particleCount = textureWidth * textureHeight;
-    const gl = canvas.getContext('webgl2');
-    
+    const particleDensity = 2 / 100; // 2 particles per 100 pixels^2
+    particleCountRef.current = calculateParticleCount(particleDensity, canvas.width, canvas.height);
+
+    const textureSize = Math.sqrt(particleCountRef.current);
+    textureSizeRef.current = { width: textureSize, height: textureSize };
+ 
     if (!initialPositionsRef.current)
-      initialPositionsRef.current = initParticles(particleCount);
-   
+      initialPositionsRef.current = initParticles(particleCountRef.current);
+
+    const gl = canvas.getContext('webgl2');
     if (!gl) {
       console.error("webgl2 not supported!");
       return;
@@ -151,9 +157,10 @@ export default function WebGLCanvas() {
     const program = createProgram(gl, vertexShaderSource, fragmentShaderSource);
     gl.useProgram(program);
 
-    const uvData = generateParticleUV(textureWidth, textureHeight);
+    const uvData = generateParticleUV(textureSizeRef.current.width, textureSizeRef.current.height);
     
     const uvBuffer = gl.createBuffer();
+    uvBufferRef.current = uvBuffer;
     gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, uvData, gl.STATIC_DRAW);
     
@@ -178,12 +185,15 @@ export default function WebGLCanvas() {
     gl.uniform1i(targetTexLoc, 1); // texture unit 1
     
     function updateTextures() {
+      const newParticleCount = particleCountRef.current;
+      const { width: newTextureWidth, height: newTextureHeight } = textureSizeRef.current;
+
       const initialPositions = initialPositionsRef.current;
       const targetPositions = getTextTargetTextureData(
-        "helloooooooooooooooo",
+        "hello",
         canvas.width,
         canvas.height,
-        particleCount,
+        newParticleCount,
         initialPositions
       );
 
@@ -193,8 +203,8 @@ export default function WebGLCanvas() {
         gl.TEXTURE_2D,
         0,
         gl.RGBA32F,
-        textureWidth,
-        textureHeight,
+        newTextureWidth,
+        newTextureHeight,
         0,
         gl.RGBA,
         gl.FLOAT,
@@ -207,8 +217,8 @@ export default function WebGLCanvas() {
         gl.TEXTURE_2D,
         0,
         gl.RGBA32F,
-        textureWidth,
-        textureHeight,
+        newTextureWidth,
+        newTextureHeight,
         0,
         gl.RGBA,
         gl.FLOAT,
@@ -236,11 +246,12 @@ export default function WebGLCanvas() {
       const mouse = mouseRef.current;
       gl.uniform2f(mousePosLoc, mouse.x * canvas.width, mouse.y * canvas.height);
      
-      renderParticles(gl, particleCount);
+      renderParticles(gl, particleCountRef.current);
       frameId = requestAnimationFrame(renderFrame);
     }
     renderFrame();
     
+    console.log("particle count: " + particleCountRef.current);
     function handleResize() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -248,8 +259,19 @@ export default function WebGLCanvas() {
 
       const canvasSizeLoc = gl.getUniformLocation(program, 'u_canvasSize');
       gl.uniform2f(canvasSizeLoc, canvas.width, canvas.height);
+      
+      const newParticleCount = calculateParticleCount(particleDensity, canvas.width, canvas.height);
+      const textureSize = Math.ceil(Math.sqrt(newParticleCount));
+
+      particleCountRef.current = textureSize * textureSize;
+      textureSizeRef.current = { width: textureSize, height: textureSize };
+      
+      const newUVs = generateParticleUV(textureSize, textureSize);
+      gl.bindBuffer(gl.ARRAY_BUFFER, uvBufferRef.current);
+      gl.bufferData(gl.ARRAY_BUFFER, newUVs, gl.STATIC_DRAW);
 
       updateTextures();
+      console.log("particle count: " + particleCountRef.current);
     }
 
     window.addEventListener("resize", handleResize);
