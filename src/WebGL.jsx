@@ -120,26 +120,24 @@ function getTextTargetTextureData(text, canvasWidth, canvasHeight, particleCount
 export default function WebGLCanvas() {
   const canvasRef = useRef(null);
   const mouseRef = useRef({ x: 0.0, y: 0.0 });
-  const initialPositionsRef = useRef(null);
-  
-  
+  const initialPositionsRef = useRef(null); 
 
   useEffect(() => {
-    const particlesPerPixel = 0.01; // 1 particel per 100 pixels^2
-    const textureWidth = 200;
-    const textureHeight = 200;
-    const particleCount = textureWidth * textureHeight;
-    
     if (!canvasRef.current) return;
-    
-    if (!initialPositionsRef.current)
-      initialPositionsRef.current = initParticles(particleCount);
 
     const canvas = canvasRef.current;
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     
+    const particlesPerPixel = 2 / 100; // 5 particles per 100 pixels^2
+    const textureWidth = Math.ceil(Math.sqrt(canvas.width * canvas.height * particlesPerPixel));
+    const textureHeight = textureWidth;
+    const particleCount = textureWidth * textureHeight;
     const gl = canvas.getContext('webgl2');
+    
+    if (!initialPositionsRef.current)
+      initialPositionsRef.current = initParticles(particleCount);
+   
     if (!gl) {
       console.error("webgl2 not supported!");
       return;
