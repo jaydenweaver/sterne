@@ -38,8 +38,8 @@ function createProgram(gl, vertSource, fragSource) {
 function initParticles(particleCount) {
   const initialPositions = new Float32Array(particleCount * 4);
     for(let i = 0; i < particleCount; i++) {
-      initialPositions[i * 4] = Math.random();
-      initialPositions[i * 4 + 1] = Math.random();
+      initialPositions[i * 4] = Math.random() * 1.2 - 0.1;
+      initialPositions[i * 4 + 1] = Math.random() * 1.2 - 0.1;
       initialPositions[i * 4 + 2] = Math.random() ** 4;
       initialPositions[i * 4 + 3] = 0;
     }
@@ -76,15 +76,15 @@ export default function WebGLCanvas() {
   const particleCountRef = useRef(0);
   const textureSizeRef = useRef({ width: 0, height: 0 });
   const uvBufferRef = useRef(null);
-
+  
   useEffect(() => {
     if (!canvasRef.current) return;
-
+    
     const canvas = canvasRef.current;
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     
-    const particleDensity = 1 / 100; // 2 particles per 100 pixels^2
+    const particleDensity = 0.5 / 100; // 2 particles per 100 pixels^2
     particleCountRef.current = calculateParticleCount(particleDensity, canvas.width, canvas.height);
 
     const textureSize = Math.sqrt(particleCountRef.current);
@@ -150,7 +150,7 @@ export default function WebGLCanvas() {
     updateTextures();
 
     const canvasSizeLoc = gl.getUniformLocation(program, 'u_canvasSize');
-    gl.uniform2f(canvasSizeLoc, canvas.width, canvas.height);
+    gl.uniform2f(canvasSizeLoc, window.innerWidth, window.innerHeight);
     
     gl.clearColor(0, 0, 0, 1);
   
@@ -207,6 +207,7 @@ export default function WebGLCanvas() {
       x: (e.clientX - rect.left) / rect.width,
       y: 1 - (e.clientY - rect.top) / rect.height,
     };
+    console.log(mouseRef.current);
   };
 
   return <canvas ref={canvasRef} style={{
@@ -216,6 +217,6 @@ export default function WebGLCanvas() {
     width: '100vw',
     height: '100vh',
     display: 'block',
-    zIndex: -1,
+    zIndex: 0,
   }} onMouseMove={handleMouseMove} />;
 }
