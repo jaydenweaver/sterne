@@ -71,7 +71,8 @@ function calculateParticleCount(density, width, height){
 
 export default function WebGLCanvas() {
   const canvasRef = useRef(null);
-  const mouseRef = useRef({ x: 0.0, y: 0.0 });
+  const smoothMouseRef = useRef({ x: 0.0, y: 0.0 });
+  const targetMouseRef = useRef({ x: 0.0, y: 0.0 });
   const initialPositionsRef = useRef(null); 
   const particleCountRef = useRef(0);
   const textureSizeRef = useRef({ width: 0, height: 0 });
@@ -156,15 +157,22 @@ export default function WebGLCanvas() {
   
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);   
+    
+    const lerp = (a, b, t) => a + (b - a) * t;
+
     const startTime = Date.now();
     let frameId;
     function renderFrame() {
       const time = Date.now() - startTime;
       const timeLoc = gl.getUniformLocation(program, 'u_time');
       gl.uniform1f(timeLoc, time);
+      
+      const lerpStrength = 0.02;
+      smoothMouseRef.current.x = lerp(smoothMouseRef.current.x, targetMouseRef.current.x, lerpStrength);
+      smoothMouseRef.current.y = lerp(smoothMouseRef.current.y, targetMouseRef.current.y, lerpStrength);
 
       const mousePosLoc = gl.getUniformLocation(program, 'u_mousePos');
-      const mouse = mouseRef.current;
+      const mouse = smoothMouseRef.current;
       gl.uniform2f(mousePosLoc, mouse.x * canvas.width, mouse.y * canvas.height);
      
       renderParticles(gl, particleCountRef.current);
@@ -203,11 +211,10 @@ export default function WebGLCanvas() {
 
   const handleMouseMove = (e) => {
     const rect = canvasRef.current.getBoundingClientRect();
-    mouseRef.current = {
+    targetMouseRef.current = {
       x: (e.clientX - rect.left) / rect.width,
       y: 1 - (e.clientY - rect.top) / rect.height,
     };
-    console.log(mouseRef.current);
   };
 
   return <canvas ref={canvasRef} style={{
