@@ -2,8 +2,6 @@
 
 precision highp float;
 
-in float v_screenX;
-in float v_screenY;
 in float z;
 out vec4 fragColor;
 
