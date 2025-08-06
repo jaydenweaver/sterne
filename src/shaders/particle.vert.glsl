@@ -29,5 +29,5 @@ void main() {
   vec2 pos = (particlePos + mouseOffset + timeOffset) * 2.0 - 1.0;
 
   gl_Position = vec4(pos, 0.0, 1.0);
-  gl_PointSize = mix(0.5, 1.5, z);
+  gl_PointSize = mix(0.5, 1.2, z);
 }

@@ -10,7 +10,18 @@ out vec4 fragColor;
 uniform vec2 u_mousePos;
 uniform float u_time;
 
+float rand(vec2 co){
+    return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
+}
+
 void main() {
   float alpha = mix(0.4, 1.0, z);
-  fragColor = vec4(1.0, 1.0, 1.0, alpha);
+
+  float off = rand(vec2(gl_FragCoord.x, gl_FragCoord.y));
+  float r   = mix(0.8, 1.0, off);
+  float g = mix(0.8, 1.0, fract(off * 1.3));
+  float b  = mix(0.8, 1.0, fract(off * 2.1));
+
+  vec3 color = vec3(r, g, b);
+  fragColor = vec4(color, alpha);
 }
