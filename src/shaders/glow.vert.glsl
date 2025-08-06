@@ -27,5 +27,5 @@ void main() {
   vec2 pos = (particlePos + mouseOffset + timeOffset) * 2.0 - 1.0;
 
   gl_Position = vec4(pos, 0.0, 1.0);
-  gl_PointSize = mix(3.0, 6.0, z); // bigger for glow
+  gl_PointSize = mix(1.0, 4.0, z); // bigger for glow
 }
