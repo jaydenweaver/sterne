@@ -37,7 +37,7 @@ function initParticles(particleCount) {
     initialPositions[i * 4] = Math.random() * 1.2 - 0.1;
     initialPositions[i * 4 + 1] = Math.random() * 1.2 - 0.1;
     initialPositions[i * 4 + 2] = Math.random() ** 4;
-    initialPositions[i * 4 + 3] = 1000.0 + Math.random() * 2500.0;
+    initialPositions[i * 4 + 3] = 1000.0 + Math.random() * 4500.0;
   }
   return initialPositions;
 }
