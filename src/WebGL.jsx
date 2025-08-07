@@ -37,7 +37,7 @@ function initParticles(particleCount) {
     initialPositions[i * 4] = Math.random() * 1.2 - 0.1;
     initialPositions[i * 4 + 1] = Math.random() * 1.2 - 0.1;
     initialPositions[i * 4 + 2] = Math.random() ** 4;
-    initialPositions[i * 4 + 3] = 0;
+    initialPositions[i * 4 + 3] = 500.0 + Math.random() * 1500.0;
   }
   return initialPositions;
 }
@@ -98,12 +98,11 @@ export default function WebGLCanvas() {
     gl.bufferData(gl.ARRAY_BUFFER, uvData, gl.STATIC_DRAW);
 
     const positionTexture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, positionTexture);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, positionTexture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.texImage2D(
       gl.TEXTURE_2D,
       0,
@@ -128,7 +127,7 @@ export default function WebGLCanvas() {
       const mouse = smoothMouseRef.current;
 
       gl.viewport(0, 0, canvas.width, canvas.height);
-      gl.clearColor(0.0,0.0,0.0,1.0);
+      gl.clearColor(0.02,0.02,0.02,1.0);
       gl.clear(gl.COLOR_BUFFER_BIT);
 
       const drawPass = (program) => {
