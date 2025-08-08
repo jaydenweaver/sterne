@@ -32,7 +32,7 @@ function createProgram(gl, vertSource, fragSource) {
 }
 
 function initParticles(particleCount) {
-  const positionRangeMultiplier = 1.2; // screen space relative
+  const positionRangeMultiplier = 1.4; // screen space relative
   const travelTime = { min: 1000.0, max: 4500.0 }; // milliseconds
   const initialPositions = new Float32Array(particleCount * 4);
   for(let i = 0; i < particleCount; i++) {
