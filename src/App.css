@@ -34,8 +34,53 @@
   animation: fadeIn 4s ease-out 0.3s forwards;
 }
 
+.fade-in-delayed {
+  opacity: 0;
+  animation: fadeIn 4s ease-out 4.3s forwards;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  gap: 2rem;
+  position: relative;
+  z-index: 1;
+}
+
 @keyframes fadeIn {
   to {
     opacity: 1;
   }
+}
+
+.next-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0px;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(5px);
+  }
+}
+
+.next-btn .arrow {
+  font-size: 1.5rem;
+  transition: transform 0.3s ease;
+}
+
+.next-btn:hover .arrow {
+  animation: float 2.0s ease-in-out infinite;
 }
