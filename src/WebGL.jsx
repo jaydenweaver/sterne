@@ -32,12 +32,14 @@ function createProgram(gl, vertSource, fragSource) {
 }
 
 function initParticles(particleCount) {
+  const positionRangeMultiplier = 1.2; // screen space relative
+  const travelTime = { min: 1000.0, max: 4500.0 }; // milliseconds
   const initialPositions = new Float32Array(particleCount * 4);
   for(let i = 0; i < particleCount; i++) {
-    initialPositions[i * 4] = Math.random() * 1.2 - 0.1;
-    initialPositions[i * 4 + 1] = Math.random() * 1.2 - 0.1;
+    initialPositions[i * 4] = Math.random() * positionRangeMultiplier - (positionRangeMultiplier - 1.0) / 2;
+    initialPositions[i * 4 + 1] = Math.random() * positionRangeMultiplier - (positionRangeMultiplier - 1.0) / 2;
     initialPositions[i * 4 + 2] = Math.random() ** 4;
-    initialPositions[i * 4 + 3] = 1000.0 + Math.random() * 4500.0;
+    initialPositions[i * 4 + 3] = travelTime.min + Math.random() * travelTime.max;
   }
   return initialPositions;
 }
