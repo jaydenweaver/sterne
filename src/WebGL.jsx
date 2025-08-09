@@ -61,10 +61,9 @@ function calculateParticleCount(density, width, height){
   return Math.ceil(Math.sqrt(density * width * height)) ** 2;
 }
 
-export default function WebGLCanvas() {
+export default function WebGLCanvas({ mousePosRef }) {
   const canvasRef = useRef(null);
   const smoothMouseRef = useRef({ x: 0.0, y: 0.0 });
-  const targetMouseRef = useRef({ x: 0.0, y: 0.0 });
   const initialPositionsRef = useRef(null); 
   const particleCountRef = useRef(0);
   const textureSizeRef = useRef({ width: 0, height: 0 });
@@ -123,9 +122,12 @@ export default function WebGLCanvas() {
 
     function renderFrame() {
       const time = Date.now() - startTime;
+      const rect = canvasRef.current.getBoundingClientRect();
+      const targetX = (mousePosRef.current.x - rect.left) / rect.width;
+      const targetY = 1 - (mousePosRef.current.y - rect.top) / rect.height;
       const lerpStrength = 0.015;
-      smoothMouseRef.current.x = lerp(smoothMouseRef.current.x, targetMouseRef.current.x, lerpStrength);
-      smoothMouseRef.current.y = lerp(smoothMouseRef.current.y, targetMouseRef.current.y, lerpStrength);
+      smoothMouseRef.current.x = lerp(smoothMouseRef.current.x, targetX, lerpStrength);
+      smoothMouseRef.current.y = lerp(smoothMouseRef.current.y, targetY, lerpStrength);
       const mouse = smoothMouseRef.current;
 
       gl.viewport(0, 0, canvas.width, canvas.height);
@@ -175,15 +177,7 @@ export default function WebGLCanvas() {
       cancelAnimationFrame(frameId);
       window.removeEventListener("resize", handleResize);
     };
-  }, []);
-
-  const handleMouseMove = (e) => {
-    const rect = canvasRef.current.getBoundingClientRect();
-    targetMouseRef.current = {
-      x: (e.clientX - rect.left) / rect.width,
-      y: 1 - (e.clientY - rect.top) / rect.height,
-    };
-  };
+  }, [mousePosRef]);
 
   return <canvas ref={canvasRef} style={{
     position: 'absolute',
@@ -192,6 +186,6 @@ export default function WebGLCanvas() {
     width: '100vw',
     height: '100vh',
     display: 'block',
-    zIndex: 0,
-  }} onMouseMove={handleMouseMove} />;
+    zIndex: -1,
+  }}/>;
 }
