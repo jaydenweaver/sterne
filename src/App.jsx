@@ -11,7 +11,12 @@ export default function App() {
     INFO: 2
   };
   
+  const fadeDuration = 500; // in milliseconds
+
   const [view, setView] = useState(STATE.LANDING);
+  const [isFading, setIsFading] = useState(false);
+  const [nextView, setNextView] = useState(null);
+
   const mousePosRef = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
@@ -25,17 +30,33 @@ export default function App() {
       window.removeEventListener('mousemove', handleMouseMove); 
     }
   }, []);
+
+  useEffect(() => {
+    if (isFading) {
+      const timeout = setTimeout(() => {
+        setView(nextView);
+        setIsFading(false);
+      }, fadeDuration); 
+      
+      return () => clearTimeout(timeout);
+    }
+  }, [isFading, nextView]);
   
+  const handleChangeView = (next) => {
+    setIsFading(true);
+    setNextView(next);
+  } 
 
   return (
     <div>
-      <div className='main'>
+      <div className={isFading ? 'fade-out main' : 'fade-in-fast main'}>
         <div>
           {view === STATE.LANDING && <Landing />}
           {view === STATE.INFO && <Info />}
         </div>
+
         {view === STATE.LANDING &&
-          <button className='next-btn fade-in-third text-content' onClick={() => setView(STATE.INFO)}>
+          <button className='next-btn fade-in-third text-content' onClick={() => handleChangeView(STATE.INFO)}>
             <span>About me</span>
             <span className='arrow'>↓</span>
           </button>
