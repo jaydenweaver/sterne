@@ -1,9 +1,17 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './App.css';
 import WebGLCanvas from './WebGL.jsx';
 import Landing from './pages/Landing.jsx';
+import Info from './pages/Info.jsx';
 
-function App() {
+export default function App() {
+  
+  const STATE = {
+    LANDING: 1,
+    INFO: 2
+  };
+  
+  const [view, setView] = useState(STATE.LANDING);
   const mousePosRef = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
@@ -23,16 +31,18 @@ function App() {
     <div>
       <div className='main'>
         <div>
-          <Landing />
+          {view === STATE.LANDING && <Landing />}
+          {view === STATE.INFO && <Info />}
         </div>
-        <button className='next-btn fade-in-third text-content' onClick={() => console.log('button clicked')}>
-          <span>About me</span>
-          <span className='arrow'>↓</span>
-        </button>
+        {view === STATE.LANDING &&
+          <button className='next-btn fade-in-third text-content' onClick={() => setView(STATE.INFO)}>
+            <span>About me</span>
+            <span className='arrow'>↓</span>
+          </button>
+        }
       </div>
       <WebGLCanvas mousePosRef={mousePosRef}/>
     </div>
   )
 }
 
-export default App
