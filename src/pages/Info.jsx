@@ -1,4 +1,5 @@
 import { useRef, useEffect } from 'react';
+import SpotifyFrame from '../components/SpotifyFrame.jsx';
 export default function Info() {
   const panelRef = useRef(null);
 
@@ -11,7 +12,7 @@ export default function Info() {
   return (
     <div ref={panelRef} className='info-panel'>
       <h1>Info page</h1>
-      <p>a</p>
+      <SpotifyFrame />
       <p>a</p>
       <p>a</p>
       <p>a</p>
