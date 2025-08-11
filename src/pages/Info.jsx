@@ -10,9 +10,11 @@ export default function Info() {
   }, []);
 
   return (
-    <div ref={panelRef} className='info-panel fade-in'>
-      <h1>Info page</h1>
-      <SpotifyFrame playlistId='28eqzJgbdcIIkwFe8tdjwG'/>
+    <div className='fade-in'>
+      <div ref={panelRef} className='info-panel'>
+        <h1>Info page</h1>
+        <SpotifyFrame trackId='4UZifG6wVTl3dFIeHKLi8y'/>
+      </div>
     </div>
   );
 } 
