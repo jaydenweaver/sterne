@@ -1,7 +1,13 @@
-export default function SpotifyFrame() {
+export default function SpotifyFrame({ playlistId }) {
+
   return(
-    <div>
-      <h2>SpotifyFrame</h2>
-    </div>
+    <iframe
+      src={`https://open.spotify.com/embed/playlist/${playlistId}`}
+      height="380"
+      frameBorder="0"
+      allow="encrypted-media"
+      allowFullScreen={false}
+      title="Spotify Player"
+    ></iframe>
   );
 }
