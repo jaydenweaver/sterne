@@ -10,10 +10,24 @@ export default function Info() {
   }, []);
 
   return (
-    <div className='fade-in'>
+    <div className='fade-in info-container'>
+      <h1>Projects</h1>
       <div ref={panelRef} className='info-panel'>
-        <h1>Info page</h1>
-        <SpotifyFrame trackId='4UZifG6wVTl3dFIeHKLi8y'/>
+        <h3>Splash</h3>
+        <h3>Sterne</h3>
+        <h3>Movie Browser</h3>
+        <h3>Splash</h3>
+        <h3>Sterne</h3>
+        <h3>Movie Browser</h3>
+        <h3>Splash</h3>
+        <h3>Sterne</h3>
+        <h3>Movie Browser</h3>
+        <h3>Splash</h3>
+        <h3>Splash</h3>
+        <h3>Sterne</h3>
+        <h3>Movie Browser</h3>
+        <h3>Sterne</h3>
+        <h3>Movie Browser</h3>
       </div>
     </div>
   );

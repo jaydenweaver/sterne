@@ -3,7 +3,7 @@ export default function Landing() {
     <div>
       <div className='text-content'>
         <h1 style={{ marginBottom: '0px' }} className='fade-in'>Hi, I'm Jayden,</h1>
-        <p style={{ marginTop: '0px' }} className='fade-in-second'>a computer science student.</p>
+        <span style={{ marginTop: '0px' }} className='fade-in-second'>a computer science student.</span>
       </div>
     </div>
   );

@@ -56,9 +56,8 @@ export default function App() {
         </div>
 
         {view === STATE.LANDING &&
-          <button className='next-btn fade-in-third text-content' onClick={() => handleChangeView(STATE.INFO)}>
-            <span>About me</span>
-            <span className='arrow'>↓</span>
+          <button className='next-btn fade-in-third glow-border' onClick={() => handleChangeView(STATE.INFO)}>
+            <span>View Projects</span>
           </button>
         }
       </div>
